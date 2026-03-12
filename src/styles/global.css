@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg: #FFFFFF;
+    --bg-soft: #F5F5F5;
+    --bg-warm: #FFF8F3;
+    --border: #E0E0E0;
+    --border-mid: #9E9E9E;
+    --text: #111111;
+    --text-mid: #444444;
+    --text-muted: #888888;
+    --text-light: #B0B0B0;
+    --accent: #367D80;
+    --warm: #F1DDC9;
+    --taupe: #AFA895;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--warm); color: var(--text); }
+  ::-webkit-scrollbar { width: 2px; }
+  ::-webkit-scrollbar-track { background: var(--bg-soft); }
+  ::-webkit-scrollbar-thumb { background: var(--border-mid); }
+}
+
+/* ── Fade in ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fi1 { animation: fadeUp 0.6s ease 0.05s both; }
+.fi2 { animation: fadeUp 0.6s ease 0.15s both; }
+.fi3 { animation: fadeUp 0.6s ease 0.25s both; }
+.fi4 { animation: fadeUp 0.6s ease 0.35s both; }
+.fi5 { animation: fadeUp 0.6s ease 0.5s  both; }
+
+/* ── Scroll reveal ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Timeline ── */
+.tl-track {
+  position: relative;
+  padding-left: 32px;
+}
+.tl-track::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 10px;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+.tl-item {
+  position: relative;
+  padding-bottom: 2rem;
+}
+.tl-dot {
+  position: absolute;
+  left: -28px;
+  top: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-mid);
+  background: white;
+  transition: border-color 0.2s, background 0.2s;
+}
+.tl-item.is-now .tl-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.tl-item:hover .tl-dot {
+  border-color: var(--accent);
+}
+
+/* Interval label between nodes */
+.tl-gap {
+  position: relative;
+  padding-bottom: 1.25rem;
+  margin-top: -0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tl-gap-tick {
+  width: 1px;
+  height: 14px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin-left: -28px; /* align with the track dots */
+}
+.tl-gap-text {
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--text-light);
+  letter-spacing: 0.1em;
+  padding-left: 6px;
+}

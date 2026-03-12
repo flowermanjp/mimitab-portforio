@@ -1,0 +1,80 @@
+---
+import { profile, goals, techs } from '../data/profile'
+---
+
+<section class="pt-28 pb-6 px-6 md:px-10">
+  <div class="max-w-5xl mx-auto">
+
+    <!-- ══ TOP: キャラクター(左) ＋ 名前/SNS/Bio(右) ══ -->
+    <div class="flex flex-col md:flex-row gap-10 md:gap-12 items-stretch mb-14">
+
+      <!-- キャラクターイラスト -->
+      <div class="w-40 md:w-48 lg:w-52 shrink-0 flex flex-col">
+        <div class="w-full flex-1 rounded-sm overflow-hidden bg-[#FFF8F3] border border-[#E8E0D8]">
+          <img src="/avater.jpg" alt="耳たぶ アイコン" class="w-full h-full object-cover" />
+        </div>
+      </div>
+
+      <!-- 名前 / SNS / Bio -->
+      <div class="flex-1">
+
+        <h1 class="text-2xl md:text-3xl font-bold tracking-wide mb-2 text-black">
+          {profile.name}<span class="text-[#888] font-light">/{profile.nameEn}</span>
+        </h1>
+
+        <p class="text-[12px] font-light text-[#666] mb-5 tracking-wide">
+          {profile.sns.map((s, i) => (
+            <>
+              {i > 0 && <span class="mx-3 text-[#CCC]">|</span>}
+              <a href={s.href} target="_blank" rel="noopener noreferrer"
+                 class="hover:text-black transition-colors duration-200 cursor-pointer">{s.label}</a>
+            </>
+          ))}
+        </p>
+
+        <div class="text-[13px] font-normal text-[#333] leading-[1.95] mb-4">
+          {profile.bio.map((line) => <p>{line}</p>)}
+        </div>
+
+        <p class="text-[10px] font-light text-[#AAAAAA] leading-relaxed">
+          {profile.iconCredit}
+        </p>
+
+      </div>
+    </div>
+
+    <!-- ══ 2カラム: やっていきたいこと(左) | 使用している技術(右) ══ -->
+    <div id="about" class="grid gap-12 md:gap-16 md:grid-cols-2">
+
+      <!-- 左: やっていきたいこと -->
+      <div>
+        <h2 class="text-[13px] font-bold tracking-[0.12em] text-black mb-7 text-left md:text-center">やっていきたいこと</h2>
+        <div class="space-y-7">
+          {goals.map((g) => (
+            <div class="flex flex-col md:flex-row md:gap-4 md:items-start">
+              <span class="w-28 shrink-0 text-[11px] font-normal text-[#888] leading-relaxed mb-1 md:mb-0 md:pt-0.5">
+                {g.label.replace('：', '')}<span class="hidden md:inline">：</span>
+              </span>
+              <p class="text-[12px] font-light text-[#333] leading-[1.9] pl-3 md:pl-0">{g.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- 右: 使用している技術 -->
+      <div>
+        <h2 class="text-[13px] font-bold tracking-[0.12em] text-black mb-7 text-left md:text-center">使用している技術</h2>
+        <div>
+          {techs.map((t) => (
+            <div class="flex gap-5 border-b border-[#F0F0F0] py-3">
+              <span class="w-24 shrink-0 text-[11px] font-light text-[#888] pt-0.5">{t.label}</span>
+              <p class="text-[13px] font-normal text-[#333]">{t.items.join(' ')}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>

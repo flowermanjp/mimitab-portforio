@@ -1,0 +1,104 @@
+---
+import { events } from '../data/timeline'
+---
+
+<section id="timeline" class="pt-2 pb-20 px-6 md:px-10">
+  <div class="max-w-3xl mx-auto">
+
+    <h2 class="text-3xl md:text-4xl font-thin tracking-[0.2em] text-center text-black mb-12 reveal">
+      TimeLine
+    </h2>
+
+    <div class="reveal relative" id="tl-wrap">
+
+      <!--
+        Layout: date(72px) + gap(12px) + circle(11px) + gap(12px) + title
+        Circle center = 72 + 12 + 5.5 = 89.5px → line at left: 89px
+      -->
+      <div class="absolute bg-[#DDDDDD]" style="width:1px; left:89px; top:6px; bottom:6px;"></div>
+
+      {events.map((ev, idx) => (
+        <div class="pb-14">
+
+          <!-- ── Title row: date・circle・title すべて items-center で揃える ── -->
+          <div class="flex items-center gap-3 mb-2">
+
+            <!-- 日付 -->
+            <div class={`w-[72px] shrink-0 text-right leading-none ${ev.isNow ? 'font-bold text-[11px] text-black' : 'font-light text-[11px] text-black'}`}>
+              {ev.period}
+            </div>
+
+            <!-- サークル -->
+            <div
+              data-tl-circle={idx}
+              class={`w-[11px] h-[11px] rounded-full border-[1.5px] shrink-0 relative z-10 ${ev.isNow ? 'border-black bg-black' : 'border-[#9E9E9E] bg-white'}`}
+            ></div>
+
+            <!-- タイトル -->
+            <h3 class="flex-1 text-[14px] font-bold leading-snug text-black">
+              {ev.title.split('\n').map((part, i) => (
+                <>{i > 0 && <br class="md:hidden" />}{part}</>
+              ))}
+            </h3>
+
+          </div>
+
+          <!-- ── Description row: スペーサーでタイトル開始位置に揃える ── -->
+          <div class="flex gap-3">
+            <div class="w-[72px] shrink-0"></div>
+            <div class="w-[11px] shrink-0"></div>
+            <div class="flex-1">
+              {ev.desc.split('\n').map((line) => (
+                <p class="text-[12px] font-light text-[#333] leading-relaxed">{line}</p>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      ))}
+
+      <!-- Gap labels: JS でサークル間の中点に絶対配置 -->
+      {events.map((ev, idx) => ev.gapToNext && (
+        <div
+          data-tl-gap={idx}
+          class="absolute pointer-events-none"
+          style="width: 72px; text-align: right; visibility: hidden;"
+        >
+          <span class="text-[10px] font-light text-[#B0B0B0] tracking-wider whitespace-nowrap">{ev.gapToNext}</span>
+        </div>
+      ))}
+
+    </div>
+  </div>
+</section>
+
+<script>
+  function positionGapLabels() {
+    const wrap = document.getElementById('tl-wrap')
+    if (!wrap) return
+
+    const wrapTop = wrap.getBoundingClientRect().top + window.scrollY
+    const circles = wrap.querySelectorAll<HTMLElement>('[data-tl-circle]')
+    const gapLabels = wrap.querySelectorAll<HTMLElement>('[data-tl-gap]')
+
+    gapLabels.forEach((label) => {
+      const idx = parseInt(label.dataset.tlGap ?? '0')
+      const circleA = circles[idx]
+      const circleB = circles[idx + 1]
+      if (!circleA || !circleB) return
+
+      const ya = circleA.getBoundingClientRect().top + window.scrollY + circleA.offsetHeight / 2 - wrapTop
+      const yb = circleB.getBoundingClientRect().top + window.scrollY + circleB.offsetHeight / 2 - wrapTop
+
+      label.style.top = `${(ya + yb) / 2}px`
+      label.style.transform = 'translateY(-50%)'
+      label.style.visibility = 'visible'
+    })
+  }
+
+  window.addEventListener('load', positionGapLabels)
+
+  const ro = new ResizeObserver(positionGapLabels)
+  const wrap = document.getElementById('tl-wrap')
+  if (wrap) ro.observe(wrap)
+</script>
