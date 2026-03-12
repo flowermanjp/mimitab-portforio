@@ -3,8 +3,9 @@ export const profile = {
   name: '耳たぶ',
   nameEn: 'mimitab',
   sns: [
-    { label: 'X: link',    href: 'https://x.com/' },
-    { label: 'Zenn: link', href: 'https://zenn.dev/' },
+    { label: 'X',    href: 'https://x.com/tabuer6' },
+    { label: 'Zenn', href: 'https://zenn.dev/omtkz' },
+    { label: 'GitHub', href: 'https://github.com/flowermanjp' }
   ],
   bio: [
     '始めまして。耳たぶと言います。',
