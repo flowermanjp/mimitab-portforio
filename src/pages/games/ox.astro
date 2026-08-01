@@ -1,0 +1,142 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import Nav from '../../components/Nav.astro'
+import Footer from '../../components/Footer.astro'
+---
+
+<Layout title="丸ばつゲーム | 耳たぶ" description="シンプルな二人対戦の丸ばつゲーム（三目並べ）。">
+  <Nav />
+  <main class="pt-28 pb-16 px-6 md:px-10 min-h-[70vh]">
+    <div class="max-w-md mx-auto">
+
+      <h1 class="text-2xl md:text-3xl font-bold tracking-wide mb-2 text-black text-center">
+        丸ばつゲーム
+      </h1>
+      <p class="text-[12px] font-light text-[#888] mb-10 text-center tracking-wide">
+        2人で交互にタップして遊べます
+      </p>
+
+      <p id="status" class="text-[13px] font-normal text-[#333] mb-6 text-center tracking-wide">
+        <span id="turn-mark" class="font-bold">○</span> のばん
+      </p>
+
+      <div id="board" class="grid grid-cols-3 gap-2 aspect-square mb-8">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <button
+            type="button"
+            class="cell flex items-center justify-center border border-[#E0E0E0] bg-white hover:bg-[#F5F5F5] transition-colors duration-150 text-4xl md:text-5xl font-light text-black"
+            data-index={i}
+            aria-label={`マス ${i + 1}`}
+          ></button>
+        ))}
+      </div>
+
+      <div class="flex justify-center">
+        <button
+          id="reset"
+          type="button"
+          class="text-[11px] font-light tracking-[0.2em] px-5 py-2 border border-[#CCCCCC] text-[#444] hover:text-black hover:border-black transition-colors duration-200"
+        >
+          もう一度
+        </button>
+      </div>
+
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  #board {
+    grid-template-rows: repeat(3, 1fr);
+  }
+  .cell[data-mark='○'] {
+    color: var(--accent);
+  }
+  .cell[data-mark='×'] {
+    color: var(--text-mid);
+  }
+  .cell.win {
+    background: var(--bg-warm);
+  }
+</style>
+
+<script>
+  const WIN_LINES = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6],
+  ]
+
+  const board = document.getElementById('board')!
+  const statusEl = document.getElementById('status')!
+  const turnMarkEl = document.getElementById('turn-mark')!
+  const resetBtn = document.getElementById('reset')!
+  const cells = Array.from(board.querySelectorAll<HTMLButtonElement>('.cell'))
+
+  let cellValues: (string | null)[] = Array(9).fill(null)
+  let currentMark = '○'
+  let gameOver = false
+
+  function checkWinner(): { mark: string; line: number[] } | null {
+    for (const line of WIN_LINES) {
+      const [a, b, c] = line
+      if (cellValues[a] && cellValues[a] === cellValues[b] && cellValues[a] === cellValues[c]) {
+        return { mark: cellValues[a]!, line }
+      }
+    }
+    return null
+  }
+
+  function render() {
+    cells.forEach((cell, i) => {
+      const v = cellValues[i]
+      cell.textContent = v ?? ''
+      if (v) cell.setAttribute('data-mark', v)
+      else cell.removeAttribute('data-mark')
+    })
+  }
+
+  function setStatus(text: string) {
+    statusEl.innerHTML = text
+  }
+
+  function handleClick(e: Event) {
+    if (gameOver) return
+    const cell = e.currentTarget as HTMLButtonElement
+    const index = Number(cell.dataset.index)
+    if (cellValues[index]) return
+
+    cellValues[index] = currentMark
+    render()
+
+    const result = checkWinner()
+    if (result) {
+      gameOver = true
+      result.line.forEach((i) => cells[i].classList.add('win'))
+      setStatus(`<span class="font-bold">${result.mark}</span> の勝ち！`)
+      return
+    }
+
+    if (cellValues.every((v) => v !== null)) {
+      gameOver = true
+      setStatus('引き分け')
+      return
+    }
+
+    currentMark = currentMark === '○' ? '×' : '○'
+    setStatus(`<span id="turn-mark" class="font-bold">${currentMark}</span> のばん`)
+  }
+
+  function reset() {
+    cellValues = Array(9).fill(null)
+    currentMark = '○'
+    gameOver = false
+    cells.forEach((cell) => cell.classList.remove('win'))
+    render()
+    setStatus(`<span id="turn-mark" class="font-bold">○</span> のばん`)
+  }
+
+  cells.forEach((cell) => cell.addEventListener('click', handleClick))
+  resetBtn.addEventListener('click', reset)
+</script>
