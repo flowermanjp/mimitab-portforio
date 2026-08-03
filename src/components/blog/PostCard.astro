@@ -1,0 +1,33 @@
+---
+import CategoryChip from './CategoryChip.astro'
+import { formatDate, type Post } from '../../data/blog'
+
+interface Props {
+  post: Post
+}
+
+const { post } = Astro.props
+---
+
+<article
+  class="post-card border-b border-[#EDEDED]"
+  data-post-categories={post.categories.join(' ')}
+>
+  <a href={`/blog/${post.id}`} class="group block py-7">
+    <p class="text-[11px] font-light tracking-[0.15em] text-[#888] mb-2">
+      <time datetime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+    </p>
+
+    <h2 class="text-[15px] md:text-[16px] font-bold leading-snug text-black mb-2 group-hover:text-[#367D80] transition-colors duration-200">
+      {post.title}
+    </h2>
+
+    <p class="text-[12px] font-light text-[#666] leading-[1.9] mb-4">
+      {post.description}
+    </p>
+
+    <div class="flex flex-wrap gap-2">
+      {post.categories.map((id) => <CategoryChip id={id} />)}
+    </div>
+  </a>
+</article>

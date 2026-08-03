@@ -57,6 +57,20 @@
   transform: translateY(0);
 }
 
+/* ── モーション設定の尊重 ──
+   OS 側で「視差効果を減らす」が有効なら、演出は出さず最終状態だけを見せる。 */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  .fi1, .fi2, .fi3, .fi4, .fi5 { animation: none; }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 /* ── Timeline ── */
 .tl-track {
   position: relative;

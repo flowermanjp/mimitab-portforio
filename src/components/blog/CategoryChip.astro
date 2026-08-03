@@ -1,0 +1,31 @@
+---
+import { categoryLabel, type CategoryId } from '../../data/blog'
+
+interface Props {
+  id: CategoryId
+  /** 渡すとリンクになる。省略すると単なるラベル */
+  href?: string
+  count?: number
+}
+
+const { id, href, count } = Astro.props
+const label = categoryLabel(id)
+
+const base =
+  'inline-flex items-center gap-1.5 text-[10px] font-light tracking-[0.15em] px-2.5 py-1 border border-[#E0E0E0] text-[#666] whitespace-nowrap'
+const interactive = 'hover:border-[#9E9E9E] hover:text-black transition-colors duration-200'
+---
+
+{
+  href ? (
+    <a href={href} class={`${base} ${interactive}`}>
+      {label}
+      {count !== undefined && <span class="text-[#B0B0B0]">{count}</span>}
+    </a>
+  ) : (
+    <span class={base}>
+      {label}
+      {count !== undefined && <span class="text-[#B0B0B0]">{count}</span>}
+    </span>
+  )
+}

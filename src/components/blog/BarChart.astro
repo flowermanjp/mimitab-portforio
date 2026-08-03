@@ -1,0 +1,68 @@
+---
+interface Bar {
+  label: string
+  value: number
+  /** アクセントカラーで強調する */
+  highlight?: boolean
+  /** 値の右に添える補足 */
+  note?: string
+}
+
+interface Props {
+  data: Bar[]
+  caption?: string
+  /** 値の後ろに付ける単位（例: '秒', '%'） */
+  unit?: string
+  /** 目盛りの最大値。省略すると data の最大値 */
+  max?: number
+}
+
+const { data, caption, unit = '', max } = Astro.props
+
+const scaleMax = max ?? Math.max(...data.map((d) => d.value), 0)
+const pct = (value: number) => (scaleMax > 0 ? (value / scaleMax) * 100 : 0)
+---
+
+<figure class="mt-8 reveal">
+  <div class="border border-[#E8E8E8] bg-white px-4 py-6 md:px-6">
+    <div class="flex flex-col gap-3">
+      {
+        data.map((d, i) => (
+          <div class="flex items-center gap-3">
+            <span class="w-20 md:w-28 shrink-0 text-right text-[11px] font-light leading-tight text-[#666]">
+              {d.label}
+            </span>
+
+            <div class="flex-1 h-5 bg-[#F5F5F5]">
+              <div
+                class="chart-bar h-full"
+                style={`width: ${pct(d.value)}%; transition-delay: ${i * 0.08}s; background: ${
+                  d.highlight ? 'var(--accent)' : 'var(--taupe)'
+                };`}
+              />
+            </div>
+
+            <span
+              class={`chart-value w-16 shrink-0 text-[11px] leading-tight ${
+                d.highlight ? 'font-bold text-[#367D80]' : 'font-light text-[#666]'
+              }`}
+              style={`transition-delay: ${0.5 + i * 0.08}s;`}
+            >
+              {d.value}
+              {unit}
+              {d.note && <span class="block text-[10px] font-light text-[#B0B0B0]">{d.note}</span>}
+            </span>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  {
+    caption && (
+      <figcaption class="mt-3 text-[11px] font-light leading-relaxed text-[#888] text-center">
+        {caption}
+      </figcaption>
+    )
+  }
+</figure>

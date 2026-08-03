@@ -1,0 +1,56 @@
+---
+interface Step {
+  title: string
+  body: string
+  /** アクセントカラーで強調する */
+  highlight?: boolean
+}
+
+interface Props {
+  steps: Step[]
+  caption?: string
+}
+
+const { steps, caption } = Astro.props
+---
+
+<figure class="mt-8 reveal">
+  <div>
+    {
+      steps.map((s, i) => (
+        <div class="step-item relative flex gap-4 pb-7 last:pb-0" style={`transition-delay: ${i * 0.1}s;`}>
+          {/* 縦の接続線。丸の中心 (14px) に合わせる */}
+          {i < steps.length - 1 && (
+            <div
+              class="step-line absolute top-8 bottom-1 w-px bg-[#DDDDDD]"
+              style={`left: 14px; transition-delay: ${i * 0.1 + 0.15}s;`}
+            />
+          )}
+
+          <div
+            class={`relative z-10 w-7 h-7 shrink-0 rounded-full border flex items-center justify-center text-[11px] font-light ${
+              s.highlight
+                ? 'border-[#367D80] bg-[#367D80] text-white'
+                : 'border-[#9E9E9E] bg-white text-[#444]'
+            }`}
+          >
+            {i + 1}
+          </div>
+
+          <div class="pt-0.5">
+            <p class="text-[13px] font-bold leading-snug text-black mb-1">{s.title}</p>
+            <p class="text-[12px] font-light leading-[1.9] text-[#666]">{s.body}</p>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  {
+    caption && (
+      <figcaption class="mt-4 text-[11px] font-light leading-relaxed text-[#888] text-center">
+        {caption}
+      </figcaption>
+    )
+  }
+</figure>

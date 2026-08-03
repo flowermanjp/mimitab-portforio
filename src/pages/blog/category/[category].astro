@@ -1,0 +1,62 @@
+---
+import '../../../styles/blog.css'
+import Layout from '../../../layouts/Layout.astro'
+import Nav from '../../../components/Nav.astro'
+import Footer from '../../../components/Footer.astro'
+import PostCard from '../../../components/blog/PostCard.astro'
+import { categoriesWithCount, postsByCategory, type CategoryId } from '../../../data/blog'
+
+// 記事が1本以上あるカテゴリだけ静的生成する
+export function getStaticPaths() {
+  return categoriesWithCount().map((c) => ({
+    params: { category: c.id },
+    props: { label: c.label, categoryId: c.id },
+  }))
+}
+
+interface Props {
+  label: string
+  categoryId: CategoryId
+}
+
+const { label, categoryId } = Astro.props
+const posts = postsByCategory(categoryId)
+---
+
+<Layout
+  title={`${label} の記事 | 耳たぶ`}
+  description={`「${label}」カテゴリの記事一覧。開発とQAについて考えたこと、作ったものの記録。`}
+>
+  <Nav />
+
+  <main class="pt-28 pb-20 px-6 md:px-10 min-h-[70vh]">
+    <div class="max-w-2xl mx-auto">
+
+      <p class="text-[11px] font-light tracking-[0.2em] text-[#B0B0B0] text-center mb-3 fi1">
+        CATEGORY
+      </p>
+      <h1 class="text-3xl md:text-4xl font-thin tracking-[0.2em] text-center text-black mb-4 fi1">
+        {label}
+      </h1>
+      <p class="text-[12px] font-light text-[#888] text-center mb-12 fi2">
+        全 {posts.length} 件
+      </p>
+
+      <div class="fi3">
+        {posts.map((post) => <PostCard post={post} />)}
+      </div>
+
+      <div class="mt-12 text-center fi4">
+        <a
+          href="/blog"
+          class="inline-block text-[11px] font-light tracking-[0.2em] px-5 py-2 border border-[#CCCCCC] text-[#444] hover:text-black hover:border-black transition-colors duration-200"
+        >
+          すべての記事へ
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
