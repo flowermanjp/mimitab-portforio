@@ -1,0 +1,117 @@
+---
+import '../styles/blog.css'
+import Layout from './Layout.astro'
+import Nav from '../components/Nav.astro'
+import Footer from '../components/Footer.astro'
+import CategoryChip from '../components/blog/CategoryChip.astro'
+import { adjacentPosts, formatDate, type Post } from '../data/blog'
+
+interface Props {
+  post: Post
+}
+
+const { post } = Astro.props
+const { prev, next } = adjacentPosts(post.id)
+---
+
+<Layout title={`${post.title} | 耳たぶ`} description={post.description}>
+  <div id="reading-progress" class="reading-progress"></div>
+  <Nav />
+
+  <main class="pt-28 pb-20 px-6 md:px-10">
+    <div class="max-w-2xl mx-auto">
+
+      <!-- ── 記事ヘッダ ── -->
+      <header class="mb-12 fi1">
+        <p class="text-[11px] font-light tracking-[0.15em] text-[#888] mb-3">
+          <time datetime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+          {post.updatedAt && (
+            <span class="ml-3 text-[#B0B0B0]">更新 {formatDate(post.updatedAt)}</span>
+          )}
+        </p>
+
+        <h1 class="text-2xl md:text-3xl font-bold leading-[1.5] tracking-wide text-black mb-5">
+          {post.title}
+        </h1>
+
+        <div class="flex flex-wrap gap-2">
+          {post.categories.map((id) => <CategoryChip id={id} href={`/blog/category/${id}`} />)}
+        </div>
+      </header>
+
+      <!-- ── 本文 ── -->
+      <article class="prose-mimi fi2">
+        <slot />
+      </article>
+
+      <!-- ── 前後の記事 ── -->
+      <nav class="mt-20 pt-8 border-t border-[#E0E0E0]" aria-label="他の記事">
+        <div class="grid gap-4 md:grid-cols-2">
+          {prev ? (
+            <a
+              href={`/blog/${prev.id}`}
+              class="group block border border-[#E0E0E0] p-4 hover:border-[#9E9E9E] transition-colors duration-200"
+            >
+              <span class="block text-[10px] font-light tracking-[0.2em] text-[#B0B0B0] mb-2">NEWER</span>
+              <span class="block text-[13px] font-normal text-[#333] leading-snug group-hover:text-black transition-colors duration-200">
+                {prev.title}
+              </span>
+            </a>
+          ) : (
+            <div class="hidden md:block"></div>
+          )}
+
+          {next && (
+            <a
+              href={`/blog/${next.id}`}
+              class="group block border border-[#E0E0E0] p-4 hover:border-[#9E9E9E] transition-colors duration-200 md:text-right"
+            >
+              <span class="block text-[10px] font-light tracking-[0.2em] text-[#B0B0B0] mb-2">OLDER</span>
+              <span class="block text-[13px] font-normal text-[#333] leading-snug group-hover:text-black transition-colors duration-200">
+                {next.title}
+              </span>
+            </a>
+          )}
+        </div>
+
+        <div class="mt-10 text-center">
+          <a
+            href="/blog"
+            class="inline-block text-[11px] font-light tracking-[0.2em] px-5 py-2 border border-[#CCCCCC] text-[#444] hover:text-black hover:border-black transition-colors duration-200"
+          >
+            記事一覧へ
+          </a>
+        </div>
+      </nav>
+
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  // 読み進み度バー。scroll ごとに rAF で1回だけ更新する。
+  const bar = document.getElementById('reading-progress')
+
+  if (bar) {
+    let ticking = false
+
+    function update() {
+      ticking = false
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight
+      const ratio = scrollable > 0 ? Math.min(window.scrollY / scrollable, 1) : 0
+      bar!.style.transform = `scaleX(${ratio})`
+    }
+
+    function onScroll() {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(update)
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    update()
+  }
+</script>

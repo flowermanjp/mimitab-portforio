@@ -1,0 +1,40 @@
+---
+// Astro 同梱の <Code />（Shiki）を使う。ランタイムの追加依存は無い。
+// shiki は lang の型を取るためだけの devDependency（astro が内部で使っているものと同じ版）。
+import { Code } from 'astro:components'
+import type { BuiltinLanguage } from 'shiki'
+
+interface Props {
+  code: string
+  lang?: BuiltinLanguage
+  /** 枠の上に出すファイル名ラベル */
+  filename?: string
+}
+
+const { code, lang = 'ts', filename } = Astro.props
+---
+
+<div class="mt-8 border border-[#E8E8E8] overflow-hidden">
+  {
+    filename && (
+      <p class="px-3 py-2 border-b border-[#E8E8E8] bg-[#FAFAFA] text-[10px] font-light tracking-[0.1em] text-[#888]">
+        {filename}
+      </p>
+    )
+  }
+  <div class="code-body">
+    <Code code={code.trim()} lang={lang} theme="github-light" />
+  </div>
+</div>
+
+<style>
+  .code-body :global(pre) {
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .code-body :global(code) {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+</style>

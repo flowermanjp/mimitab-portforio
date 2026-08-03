@@ -1,0 +1,45 @@
+---
+import '../../styles/blog.css'
+import Layout from '../../layouts/Layout.astro'
+import Nav from '../../components/Nav.astro'
+import Footer from '../../components/Footer.astro'
+import CategoryFilter from '../../components/blog/CategoryFilter.astro'
+import PostCard from '../../components/blog/PostCard.astro'
+import { publishedPosts } from '../../data/blog'
+
+const posts = publishedPosts()
+---
+
+<Layout
+  title="Blog | 耳たぶ"
+  description="開発とQAについて考えたこと、作ったものの記録。図表とアニメーションで説明を試みるブログ。"
+>
+  <Nav />
+
+  <main class="pt-28 pb-20 px-6 md:px-10 min-h-[70vh]">
+    <div class="max-w-2xl mx-auto">
+
+      <h1 class="text-3xl md:text-4xl font-thin tracking-[0.2em] text-center text-black mb-4 fi1">
+        Blog
+      </h1>
+      <p class="text-[12px] font-light text-[#888] text-center leading-relaxed mb-12 fi2">
+        開発とQAについて考えたこと、作ったものの記録。
+      </p>
+
+      <div class="fi3">
+        <CategoryFilter totalCount={posts.length} />
+      </div>
+
+      <div class="fi4">
+        {posts.map((post) => <PostCard post={post} />)}
+
+        <p id="filter-empty" hidden class="py-16 text-center text-[12px] font-light text-[#888]">
+          該当する記事がまだありません。
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <Footer />
+</Layout>

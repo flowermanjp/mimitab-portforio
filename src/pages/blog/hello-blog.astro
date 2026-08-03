@@ -1,0 +1,196 @@
+---
+import BlogArticle from '../../layouts/BlogArticle.astro'
+import Callout from '../../components/blog/Callout.astro'
+import Figure from '../../components/blog/Figure.astro'
+import BarChart from '../../components/blog/BarChart.astro'
+import StepFlow from '../../components/blog/StepFlow.astro'
+import CodeBlock from '../../components/blog/CodeBlock.astro'
+import { getPost } from '../../data/blog'
+
+const post = getPost('hello-blog')
+
+const registrySample = `
+// src/data/blog.ts
+export const posts: Post[] = [
+  {
+    id: 'hello-blog',           // = /blog/hello-blog
+    title: 'このブログの作り方',
+    description: '...',
+    publishedAt: '2026-08-03',
+    categories: ['astro', 'dev'],
+  },
+]
+`
+
+const pageSample = `
+// src/pages/blog/hello-blog.astro
+import BlogArticle from '../../layouts/BlogArticle.astro'
+import BarChart from '../../components/blog/BarChart.astro'
+import { getPost } from '../../data/blog'
+
+const post = getPost('hello-blog')
+---
+<BlogArticle post={post}>
+  <p>本文。ここから先は普通の .astro なので、</p>
+  <BarChart data={[...]} caption="好きな図をそのまま置ける" />
+</BlogArticle>
+`
+---
+
+<BlogArticle post={post}>
+
+  <p>
+    ポートフォリオに <code>/blog</code> を足しました。
+    技術記事は Zenn にも書いているのですが、そちらでは書けないものを置く場所が欲しくなったからです。
+  </p>
+
+  <p>
+    書けないもの、というのは表現のことです。
+    「このテストは実行にこれくらい時間がかかっていて、こう変えたらこうなった」みたいな話は、
+    文章と表で説明するより、動く図を1つ置いたほうが伝わることがあります。
+    自分でソースを持っているサイトなら、記事ごとに好きなものを書けます。
+  </p>
+
+  <Callout type="tip" title="このブログの方針">
+    <p>
+      外部のチャートライブラリは入れていません。図はすべてインラインの HTML / CSS / SVG です。
+      静的サイトに余計な JavaScript を載せずに、記事ごとに必要なものだけを書く、という形にしています。
+    </p>
+  </Callout>
+
+  <h2>仕組み</h2>
+
+  <p>
+    表現の自由度を最優先にしたかったので、Markdown や MDX ではなく
+    <strong>記事1本 = 1つの .astro ページ</strong> にしました。
+    記事ファイルの中に <code>&lt;script&gt;</code> も <code>&lt;style&gt;</code> も SVG も直接書けます。
+  </p>
+
+  <p>
+    ただ、そうすると一覧ページや絞り込みに必要なメタデータ（タイトル・日付・カテゴリ）を
+    集める方法が要ります。ここは素直に、メタデータだけを別ファイルに分けました。
+  </p>
+
+  <StepFlow
+    steps={[
+      {
+        title: 'src/data/blog.ts に1行足す',
+        body: 'id・タイトル・日付・カテゴリを書く。ここが記事メタデータの唯一の情報源になる。',
+      },
+      {
+        title: 'src/pages/blog/{id}.astro を書く',
+        body: '自分の id で getPost() を引いてレイアウトに渡したら、あとは中身を自由に書くだけ。',
+        highlight: true,
+      },
+      {
+        title: '一覧とカテゴリページは自動で追従する',
+        body: '/blog と /blog/category/{id} は blog.ts だけを読んでいるので、記事側では何もしなくていい。',
+      },
+    ]}
+    caption="記事を1本書くときの流れ"
+  />
+
+  <CodeBlock code={registrySample} lang="ts" filename="メタデータはここに集約する" />
+
+  <CodeBlock code={pageSample} lang="astro" filename="記事本体は普通の .astro ページ" />
+
+  <p>
+    一覧ページが記事コンポーネントを <code>import</code> しない、という点だけは意図的です。
+    もし一覧側で全記事を読み込んでメタデータを取り出す作りにすると、
+    記事ごとに書いた <code>&lt;script&gt;</code> が一覧ページのバンドルにまで入ってきてしまいます。
+    メタデータを別ファイルに切った理由の半分はこれです。
+  </p>
+
+  <Callout type="warn" title="代わりに払うコスト">
+    <p>
+      記事を書くたびに2つのファイルを触ることになります。片方だけ足して忘れる事故が起きうるので、
+      「<code>src/pages/blog/</code> のファイル名の集合」と「レジストリの id の集合」が
+      一致しているかを確かめるテストを置いて、ズレたら CI が落ちるようにしています。
+    </p>
+  </Callout>
+
+  <h2>記事の中で使えるもの</h2>
+
+  <p>
+    よく使いそうな図は <code>src/components/blog/</code> にコンポーネントとして置いています。
+    まだ最低限だけで、書きながら足していく予定です。
+  </p>
+
+  <h3>棒グラフ</h3>
+
+  <p>
+    数値の比較用。スクロールして画面に入ったタイミングでバーが伸びます。
+  </p>
+
+  <BarChart
+    data={[
+      { label: '手動実行', value: 42, note: '1人日' },
+      { label: '自動化前', value: 28 },
+      { label: '自動化後', value: 6, highlight: true },
+    ]}
+    unit="分"
+    caption="※ 数値はコンポーネントの表示例で、実測値ではありません"
+  />
+
+  <h3>手書きの図</h3>
+
+  <p>
+    決まった形に収まらないものは <code>&lt;Figure&gt;</code> に SVG をそのまま入れます。
+    下の図は線が引かれるアニメーションを CSS で書いたものです。
+  </p>
+
+  <Figure caption="Figure の中身は完全に自由。これは stroke-dashoffset で線を描いている">
+    <svg viewBox="0 0 400 120" class="w-full h-auto" role="img" aria-label="3つのノードが線で結ばれた図">
+      <line class="draw-line" x1="60" y1="60" x2="200" y2="60" stroke="#9E9E9E" stroke-width="1" />
+      <line class="draw-line draw-line-2" x1="200" y1="60" x2="340" y2="60" stroke="#9E9E9E" stroke-width="1" />
+
+      <circle cx="60" cy="60" r="10" fill="white" stroke="#9E9E9E" stroke-width="1.5" />
+      <circle cx="200" cy="60" r="10" fill="white" stroke="#9E9E9E" stroke-width="1.5" />
+      <circle cx="340" cy="60" r="10" fill="#367D80" stroke="#367D80" stroke-width="1.5" />
+
+      <text x="60" y="95" text-anchor="middle" font-size="10" fill="#888" font-weight="300">書く</text>
+      <text x="200" y="95" text-anchor="middle" font-size="10" fill="#888" font-weight="300">CI</text>
+      <text x="340" y="95" text-anchor="middle" font-size="10" fill="#367D80" font-weight="300">公開</text>
+    </svg>
+  </Figure>
+
+  <h3>補足ブロック</h3>
+
+  <Callout title="note">
+    <p>本筋から少し外れる話や、前提の補足はこの形で置きます。</p>
+  </Callout>
+
+  <h2>これから</h2>
+
+  <p>
+    今のところ置いてあるのは棒グラフ・手順図・補足ブロック・コード・自由な図の5つだけです。
+    記事を書いていて「これが欲しい」と思ったものを、その都度足していこうと思っています。
+  </p>
+
+  <p>
+    普段は Playwright での E2E まわりを触っているので、そのあたりの話から書いていく予定です。
+  </p>
+
+</BlogArticle>
+
+<style>
+  /* この記事だけのアニメーション。親の .reveal が visible になったら線を描く */
+  .draw-line {
+    stroke-dasharray: 140;
+    stroke-dashoffset: 140;
+    transition: stroke-dashoffset 0.8s ease 0.1s;
+  }
+  .draw-line-2 {
+    transition-delay: 0.7s;
+  }
+  :global(.reveal.visible) .draw-line {
+    stroke-dashoffset: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .draw-line {
+      transition: none;
+      stroke-dashoffset: 0;
+    }
+  }
+</style>

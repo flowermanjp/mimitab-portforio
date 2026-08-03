@@ -1,0 +1,54 @@
+---
+interface Props {
+  type?: 'note' | 'tip' | 'warn'
+  title?: string
+}
+
+const { type = 'note', title } = Astro.props
+---
+
+<aside class={`callout callout-${type}`}>
+  {title && <p class="callout-title">{title}</p>}
+  <div class="callout-body">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .callout {
+    border-left: 2px solid var(--border-mid);
+    background: var(--bg-soft);
+    padding: 1rem 1.2rem;
+    margin-top: 2rem;
+  }
+  .callout-tip {
+    border-left-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
+  }
+  .callout-warn {
+    border-left-color: var(--taupe);
+    background: var(--bg-warm);
+  }
+
+  .callout-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .callout-tip .callout-title {
+    color: var(--accent);
+  }
+
+  .callout-body {
+    font-size: 12px;
+    font-weight: 300;
+    line-height: 1.9;
+    color: var(--text-mid);
+  }
+  /* 本文は <slot /> 経由で親スコープの要素が入るので :global が要る */
+  .callout-body > :global(* + *) {
+    margin-top: 0.8em;
+  }
+</style>

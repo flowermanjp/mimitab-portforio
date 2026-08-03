@@ -1,0 +1,150 @@
+---
+import { categoriesWithCount } from '../../data/blog'
+
+interface Props {
+  totalCount: number
+}
+
+const { totalCount } = Astro.props
+const cats = categoriesWithCount()
+
+const chipBase =
+  'text-[11px] font-light tracking-[0.15em] px-4 py-2 border transition-colors duration-200 cursor-pointer'
+const chipOff = 'border-[#E0E0E0] text-[#666] hover:border-[#9E9E9E] hover:text-black'
+---
+
+<div class="mb-10">
+  <div class="flex flex-wrap gap-2" role="group" aria-label="カテゴリで絞り込む">
+    <button type="button" data-filter-all class={`${chipBase} ${chipOff}`} aria-pressed="true">
+      すべて
+      <span class="ml-1.5 text-[#B0B0B0]">{totalCount}</span>
+    </button>
+
+    {
+      cats.map((c) => (
+        <button
+          type="button"
+          data-filter-cat={c.id}
+          class={`${chipBase} ${chipOff}`}
+          aria-pressed="false"
+        >
+          {c.label}
+          <span class="ml-1.5 text-[#B0B0B0]">{c.count}</span>
+        </button>
+      ))
+    }
+  </div>
+
+  <p
+    id="filter-status"
+    aria-live="polite"
+    class="mt-4 text-[11px] font-light tracking-[0.1em] text-[#888]"
+  >
+  </p>
+</div>
+
+<style>
+  /* 選択中のチップ。Tailwind の任意値だと状態切替が読みにくいのでここに置く */
+  button[aria-pressed='true'] {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+  }
+</style>
+
+<script>
+  const allBtn = document.querySelector<HTMLButtonElement>('[data-filter-all]')
+  const catBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-filter-cat]'))
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-post-categories]'))
+  const statusEl = document.getElementById('filter-status')
+  const emptyEl = document.getElementById('filter-empty')
+
+  if (allBtn && cards.length > 0) {
+    const known = new Set(catBtns.map((b) => b.dataset.filterCat!))
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const FADE_MS = 200
+
+    /** 選択中のカテゴリ。空 = すべて表示 */
+    let selected = new Set<string>()
+    /** 連打で古い setTimeout が後から効かないようにするための世代番号 */
+    let generation = 0
+
+    function readUrl() {
+      const raw = new URLSearchParams(location.search).get('cat')
+      if (!raw) return
+      selected = new Set(raw.split(',').filter((id) => known.has(id)))
+    }
+
+    function writeUrl() {
+      const url = new URL(location.href)
+      if (selected.size === 0) url.searchParams.delete('cat')
+      else url.searchParams.set('cat', Array.from(selected).join(','))
+      history.replaceState(null, '', url)
+    }
+
+    function matches(card: HTMLElement) {
+      if (selected.size === 0) return true
+      const own = (card.dataset.postCategories ?? '').split(' ')
+      return own.some((id) => selected.has(id))
+    }
+
+    function render(animate: boolean) {
+      const gen = ++generation
+      let shown = 0
+
+      cards.forEach((card) => {
+        const show = matches(card)
+        if (show) shown++
+
+        if (!animate || reduceMotion) {
+          card.hidden = !show
+          card.classList.toggle('is-filtering-out', false)
+          return
+        }
+
+        if (show) {
+          card.hidden = false
+          card.classList.add('is-filtering-out')
+          requestAnimationFrame(() => {
+            if (gen === generation) card.classList.remove('is-filtering-out')
+          })
+        } else {
+          card.classList.add('is-filtering-out')
+          setTimeout(() => {
+            if (gen === generation) card.hidden = true
+          }, FADE_MS)
+        }
+      })
+
+      allBtn!.setAttribute('aria-pressed', String(selected.size === 0))
+      catBtns.forEach((b) =>
+        b.setAttribute('aria-pressed', String(selected.has(b.dataset.filterCat!)))
+      )
+
+      if (statusEl) {
+        statusEl.textContent =
+          selected.size === 0 ? `全 ${cards.length} 件` : `${shown} 件を表示中`
+      }
+      if (emptyEl) emptyEl.hidden = shown > 0
+    }
+
+    allBtn.addEventListener('click', () => {
+      selected.clear()
+      writeUrl()
+      render(true)
+    })
+
+    catBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.filterCat!
+        if (selected.has(id)) selected.delete(id)
+        else selected.add(id)
+        writeUrl()
+        render(true)
+      })
+    })
+
+    readUrl()
+    render(false)
+  }
+</script>
