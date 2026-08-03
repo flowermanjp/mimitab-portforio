@@ -1,0 +1,449 @@
+---
+import BlogArticle from '../../layouts/BlogArticle.astro'
+import Callout from '../../components/blog/Callout.astro'
+import Figure from '../../components/blog/Figure.astro'
+import BarChart from '../../components/blog/BarChart.astro'
+import StepFlow from '../../components/blog/StepFlow.astro'
+import CodeBlock from '../../components/blog/CodeBlock.astro'
+import { getPost } from '../../data/blog'
+
+const post = getPost('blog-structure-and-skill')
+
+const skillFrontmatter = `
+---
+name: blog-post
+description: mimitab-portforio のブログ記事（/blog 配下）を新規作成・編集する
+  ときの手順。「ブログ書きたい」「記事追加して」「/blog に〜の記事を」など、
+  このポートフォリオの記事に関わる作業で必ず使う。記事は1本 = 1つの .astro
+  ページで、メタデータのレジストリとの2ファイル管理になっているので、
+  この手順を踏まないと CI が落ちる。
+---
+`
+
+const skillPitfalls = `
+## CSS の落とし穴
+
+- src/styles/blog.css は Tailwind のレイヤー外なので、ユーティリティより強い。
+  .chart-bar .step-line .reading-progress は blog.css 側で transform を
+  持っているので、これらの要素に -translate-x-1/2 などを足しても効かない
+- 本文は .prose-mimi で囲まれていて h2 h3 p ul ol a blockquote table code に
+  スタイルが当たる。コンポーネント内部でリスト風の見た目を作るときは
+  ul/ol ではなく div を使う（StepFlow がそうしている）
+`
+
+const structureTest = `
+const pageIds = readdirSync(BLOG_PAGES_DIR, { withFileTypes: true })
+  .filter((e) => e.isFile() && e.name.endsWith('.astro') && e.name !== 'index.astro')
+  .map((e) => e.name.replace(/\\.astro$/, ''))
+  .sort()
+
+const registryIds = posts.map((p) => p.id).sort()
+
+it('ページがあるのに src/data/blog.ts に登録されていない記事が無い', () => {
+  const missing = pageIds.filter((id) => !registryIds.includes(id))
+  expect(missing, \`src/data/blog.ts に登録してください: \${missing.join(', ')}\`).toEqual([])
+})
+`
+---
+
+<BlogArticle post={post}>
+
+  <p>
+    前の記事でこのブログの作り方をざっと書きました。今回はもう少し踏み込んで、
+    <strong>なぜこの構成なのか</strong>と、
+    <strong>この構成を AI に触らせるために何を書いているか</strong>の話をします。
+  </p>
+
+  <p>
+    このリポジトリは最初から、自分と AI（Claude Code）の両方が触る前提で組んでいます。
+    構成を決めるときに「人間が書きやすいか」だけでなく「AI に説明しきれるか」を
+    条件に入れると、選ぶものが少し変わる、というのが書きたいことです。
+  </p>
+
+  <h2>3つの案を比べた</h2>
+
+  <p>
+    記事の持ち方には候補が3つありました。
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>案</th>
+        <th>表現の自由度</th>
+        <th>執筆の手数</th>
+        <th>依存</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Markdown + content collections</td>
+        <td>低い</td>
+        <td>1ファイル</td>
+        <td>なし</td>
+      </tr>
+      <tr>
+        <td>MDX + content collections</td>
+        <td>中くらい</td>
+        <td>1ファイル</td>
+        <td><code>@astrojs/mdx</code></td>
+      </tr>
+      <tr>
+        <td><strong>記事ごとの .astro ページ</strong></td>
+        <td><strong>制限なし</strong></td>
+        <td><strong>2ファイル</strong></td>
+        <td><strong>なし</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    MDX なら本文にコンポーネントを埋め込めます。ただ「この記事だけの実験的な表現」をやろうとすると、
+    結局その記事専用のコンポーネントを別ファイルに切り出すことになる。
+    それなら最初からページごと <code>.astro</code> でいいだろう、と考えて3案目にしました。
+    ここでいちばん欲しかったのは、記事ファイルの中に
+    <code>&lt;style&gt;</code> と <code>&lt;script&gt;</code> と SVG をそのまま書けることです。
+  </p>
+
+  <h2>構成 — 依存が一方向であること</h2>
+
+  <p>
+    3案目を選ぶと、一覧ページに出すメタデータをどこから集めるかという問題が出てきます。
+    ここは素直に、メタデータだけを <code>src/data/blog.ts</code> に切り出しました。
+    大事なのは矢印の向きです。
+  </p>
+
+  <Figure caption="全部がレジストリを向いている。逆向きの依存は作らない">
+    <svg viewBox="0 0 480 240" class="w-full h-auto" role="img"
+         aria-label="src/data/blog.ts を、一覧ページ・カテゴリページ・記事ページの3つが参照する図。一覧ページから記事ページへの依存には×が付いている">
+
+      <!-- レジストリ -->
+      <rect class="dg-box" x="150" y="14" width="180" height="48" fill="#FFF8F3" stroke="#367D80" stroke-width="1.5" />
+      <text class="dg-t" x="240" y="34" text-anchor="middle" font-size="11" fill="#367D80" font-weight="700">src/data/blog.ts</text>
+      <text class="dg-t" x="240" y="50" text-anchor="middle" font-size="9" fill="#888">メタデータの唯一の情報源</text>
+
+      <!-- 矢印 -->
+      <path class="dg-line dg-l1" d="M 76 132 L 76 96 L 186 96 L 186 66" fill="none" stroke="#9E9E9E" stroke-width="1" marker-end="url(#dg-arrow)" />
+      <path class="dg-line dg-l2" d="M 240 132 L 240 66" fill="none" stroke="#9E9E9E" stroke-width="1" marker-end="url(#dg-arrow)" />
+      <path class="dg-line dg-l3" d="M 404 132 L 404 96 L 294 96 L 294 66" fill="none" stroke="#367D80" stroke-width="1" marker-end="url(#dg-arrow-a)" />
+
+      <text class="dg-t" x="120" y="90" text-anchor="middle" font-size="9" fill="#888">読む</text>
+      <text class="dg-t" x="368" y="90" text-anchor="middle" font-size="9" fill="#367D80">getPost()</text>
+
+      <!-- 3つの利用側 -->
+      <rect class="dg-box" x="16" y="132" width="120" height="42" fill="#FFFFFF" stroke="#9E9E9E" stroke-width="1" />
+      <text class="dg-t" x="76" y="150" text-anchor="middle" font-size="10" fill="#111" font-weight="700">/blog</text>
+      <text class="dg-t" x="76" y="164" text-anchor="middle" font-size="9" fill="#888">一覧・絞り込み</text>
+
+      <rect class="dg-box" x="156" y="132" width="168" height="42" fill="#FFFFFF" stroke="#9E9E9E" stroke-width="1" />
+      <text class="dg-t" x="240" y="150" text-anchor="middle" font-size="10" fill="#111" font-weight="700">/blog/category/…</text>
+      <text class="dg-t" x="240" y="164" text-anchor="middle" font-size="9" fill="#888">静的生成</text>
+
+      <rect class="dg-box" x="344" y="132" width="120" height="42" fill="#FFFFFF" stroke="#367D80" stroke-width="1.5" />
+      <text class="dg-t" x="404" y="150" text-anchor="middle" font-size="10" fill="#111" font-weight="700">記事ページ</text>
+      <text class="dg-t" x="404" y="164" text-anchor="middle" font-size="9" fill="#888">.astro ／ 1本1ファイル</text>
+
+      <!-- 作らない依存 -->
+      <path class="dg-line dg-l4" d="M 136 200 L 344 200" fill="none" stroke="#CCCCCC" stroke-width="1" stroke-dasharray="4 3" />
+      <path class="dg-line dg-l4" d="M 76 174 L 76 200" fill="none" stroke="#CCCCCC" stroke-width="1" stroke-dasharray="4 3" />
+      <path class="dg-line dg-l4" d="M 404 174 L 404 200" fill="none" stroke="#CCCCCC" stroke-width="1" stroke-dasharray="4 3" />
+
+      <g class="dg-x">
+        <circle cx="240" cy="200" r="11" fill="#FFFFFF" stroke="#AFA895" stroke-width="1" />
+        <path d="M 236 196 L 244 204 M 244 196 L 236 204" stroke="#AFA895" stroke-width="1.5" />
+      </g>
+      <text class="dg-t" x="240" y="226" text-anchor="middle" font-size="9" fill="#AFA895">この依存は作らない</text>
+
+      <defs>
+        <marker id="dg-arrow" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#9E9E9E" />
+        </marker>
+        <marker id="dg-arrow-a" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#367D80" />
+        </marker>
+      </defs>
+    </svg>
+  </Figure>
+
+  <p>
+    一覧ページから記事ページへの矢印を作らない、というのがこの構成のいちばんの肝です。
+    メタデータを記事ファイル側に置いて <code>import.meta.glob</code> で集める書き方もありますが、
+    それをやると一覧ページが全記事コンポーネントを <code>import</code> することになり、
+    <strong>記事ごとに書いた <code>&lt;script&gt;</code> が一覧ページのバンドルに入ってきます</strong>。
+    記事の中で好きなだけスクリプトを書きたいのに、それが一覧を重くするのでは本末転倒です。
+  </p>
+
+  <h2>結果として何が載っているか</h2>
+
+  <p>
+    ビルド後の HTML を実際に測ってみます。各ページに含まれる
+    <code>&lt;script&gt;</code> の合計バイト数です。
+  </p>
+
+  <BarChart
+    data={[
+      { label: 'カテゴリページ', value: 429, note: '土台のみ' },
+      { label: '記事ページ', value: 788, note: '+ 進捗バー' },
+      { label: 'トップ /', value: 1062 },
+      { label: '一覧 /blog', value: 1985, highlight: true, note: '+ 絞り込み' },
+    ]}
+    unit="B"
+    caption="実測値。全ページ共通の土台（スクロール監視とナビ）が 429B で、あとはそのページで必要なぶんだけ増える"
+  />
+
+  <p>
+    一覧がいちばん大きいのは絞り込み UI のぶんです。そして
+    <strong>記事が何本増えてもこの 1985B は変わりません</strong>。
+    記事ページ側の 788B にも、絞り込みのコードは1バイトも入っていません。
+    矢印を一方向にした効果がそのまま出ています。
+  </p>
+
+  <Callout type="note" title="測り方">
+    <p>
+      <code>npm run build</code> の出力に対して、各 HTML の script タグの中身と
+      外部 JS のファイルサイズを合計しました。Astro はこの規模だとスクリプトを
+      インライン化するので、実際には全部インラインです。
+    </p>
+  </Callout>
+
+  <h2>代償は「2ファイル管理」</h2>
+
+  <p>
+    いいことばかりではありません。この構成では記事1本につき
+    レジストリとページの2ファイルを触ることになります。
+    片方だけ足して忘れる、という事故が構造的に起こりえます。
+  </p>
+
+  <p>
+    しかもこの手のミスは、ビルドが通ってしまうぶんタチが悪い。
+    ページだけ作った場合は URL は生きているのに一覧に出てこないし、
+    レジストリだけ足した場合は一覧のリンクが 404 になります。
+  </p>
+
+  <h2>3層で守る</h2>
+
+  <p>
+    なので、この「知らないと事故る」を3つの層に分けて書いています。
+    上にいくほど意図の説明で、下にいくほど強制力があります。
+  </p>
+
+  <Figure caption="上2つは AI に読ませる文章、いちばん下だけが機械的に止めるもの">
+    <svg viewBox="0 0 480 210" class="w-full h-auto" role="img"
+         aria-label="3層のガードの図。上から CLAUDE.md、blog-post スキル、CI の構造テストの順に、下にいくほど強制力が強くなる">
+
+      <rect class="gd-box gd-b1" x="20" y="12" width="380" height="50" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1" />
+      <text class="gd-t gd-b1" x="36" y="32" font-size="10" fill="#111" font-weight="700">~/.claude/CLAUDE.md</text>
+      <text class="gd-t gd-b1" x="36" y="48" font-size="9" fill="#888">マシン全体の方針。ADR を残す・ガードレールを後付けにしない</text>
+
+      <rect class="gd-box gd-b2" x="20" y="76" width="380" height="50" fill="#FFF8F3" stroke="#AFA895" stroke-width="1" />
+      <text class="gd-t gd-b2" x="36" y="96" font-size="10" fill="#111" font-weight="700">.claude/skills/blog-post/SKILL.md</text>
+      <text class="gd-t gd-b2" x="36" y="112" font-size="9" fill="#888">この repo での書き方。2ファイルの手順、落とし穴、デザインの制約</text>
+
+      <rect class="gd-box gd-b3" x="20" y="140" width="380" height="50" fill="#FFFFFF" stroke="#367D80" stroke-width="1.5" />
+      <text class="gd-t gd-b3" x="36" y="160" font-size="10" fill="#367D80" font-weight="700">npm run test （CI）</text>
+      <text class="gd-t gd-b3" x="36" y="176" font-size="9" fill="#888">レジストリとページファイルの集合が一致しているかを検証する</text>
+
+      <!-- 強制力の目盛り -->
+      <line class="gd-axis" x1="428" y1="16" x2="428" y2="186" stroke="#E0E0E0" stroke-width="1" />
+      <text class="gd-t gd-b1" x="440" y="34" font-size="9" fill="#B0B0B0">意図</text>
+      <text class="gd-t gd-b3" x="440" y="168" font-size="9" fill="#367D80">強制</text>
+      <path class="gd-axis" d="M 428 186 L 425 178 M 428 186 L 431 178" stroke="#367D80" stroke-width="1" fill="none" />
+    </svg>
+  </Figure>
+
+  <h3>1層目 — 機械全体の方針</h3>
+
+  <p>
+    このマシンには他にもアプリが載っていて、共通の方針を
+    <code>~/.claude/CLAUDE.md</code> に書いています。
+    「アーキテクチャの決定は ADR に残す」「テストしやすさとガードレールは
+    最初のセットアップに含める、後付けにしない」といった内容です。
+    今回 <code>decisions/0001</code> と構造テストが最初から入っているのは、これが効いているからです。
+  </p>
+
+  <h3>2層目 — この repo での書き方</h3>
+
+  <p>
+    リポジトリの中に <code>.claude/skills/blog-post/SKILL.md</code> を置いています。
+    AI 向けの、記事の書き方の説明書です。
+    <code>description</code> にどういうときに読むかを書いておくと、
+    「ブログ書きたい」と言うだけで拾ってくれます。
+  </p>
+
+  <CodeBlock code={skillFrontmatter} lang="yaml" filename=".claude/skills/blog-post/SKILL.md（冒頭）" />
+
+  <p>
+    中身で分量を割いているのは、手順そのものより
+    <strong>ソースを読んだだけでは分からないこと</strong>です。
+    実際、このブログを作っている最中に自分で踏んだものをそのまま書いています。
+  </p>
+
+  <CodeBlock code={skillPitfalls} lang="md" filename="落とし穴の節（抜粋）" />
+
+  <p>
+    上は「Tailwind のユーティリティが効かない場所がある」という話です。
+    <code>blog.css</code> は Tailwind のレイヤーの外にあるので、
+    レイヤー内のユーティリティより強く効きます。
+    アニメーション用に <code>transform</code> を持っている要素に
+    <code>-translate-x-1/2</code> を足しても、黙って無視される。
+    こういうものはコードを読んでも気づけないので、明示的に書いておく価値があります。
+  </p>
+
+  <h3>3層目 — 機械的に止める</h3>
+
+  <p>
+    とはいえ、文章はあくまで読んでもらう前提のものです。最後は機械で止めます。
+  </p>
+
+  <CodeBlock code={structureTest} lang="ts" filename="src/data/blog.structure.test.ts（抜粋）" />
+
+  <p>
+    <code>src/pages/blog/</code> のファイル名の集合と、レジストリの id の集合を突き合わせるだけです。
+    ズレたら、どちらに何を足せばいいかをメッセージに出して落ちます。
+    日付の形式やカテゴリの妥当性も同じテストで見ています。
+  </p>
+
+  <Callout type="tip" title="ちゃんと落ちるかを確かめる">
+    <p>
+      ガードは、書いたあとに一度わざと壊してみないと意味がありません。
+      レジストリに無いページを1つ置いて <code>npm run test</code> を走らせ、
+      <code>src/data/blog.ts に登録してください: dummy-drift-check</code>
+      と出て落ちることを確認してから消しました。
+    </p>
+  </Callout>
+
+  <h2>記事1本を書く流れ</h2>
+
+  <p>
+    ここまでを踏まえると、実際の手順はこれだけになります。
+    この記事自体も、この流れで書かれています。
+  </p>
+
+  <StepFlow
+    steps={[
+      {
+        title: 'スキルが読まれる',
+        body: '「ブログ書きたい」と言うと description が引っかかって SKILL.md が読み込まれる。id の命名規則や既存カテゴリ、日付は推測せず date +%F で取ること、などがここに書いてある。',
+      },
+      {
+        title: 'src/data/blog.ts の先頭に1件足す',
+        body: 'id・タイトル・description・日付・カテゴリ。新しい順に並べる規約なので配列の先頭に入れる。',
+      },
+      {
+        title: 'src/pages/blog/{id}.astro を書く',
+        body: 'getPost(id) を引いて BlogArticle に渡したら、あとは本文。図が足りなければ Figure に SVG を直接書く。',
+        highlight: true,
+      },
+      {
+        title: 'test / typecheck / build',
+        body: '2ファイルのどちらかを忘れていればここで落ちる。通れば一覧にもカテゴリページにも自動で並ぶ。',
+      },
+    ]}
+    caption="人間がやることも AI がやることも同じ"
+  />
+
+  <h2>思ったこと</h2>
+
+  <p>
+    構成を決めるときに「AI に説明しきれるか」を条件に足すと、
+    <strong>暗黙になっている部分がそのままコストとして見えてきます</strong>。
+    今回でいうと「2ファイル管理」がそれで、人間ひとりなら慣れで済ませていたと思います。
+    説明しないといけないと分かった時点で、テストで守る側に倒しました。
+  </p>
+
+  <p>
+    これは QA の仕事で感じることと似ています。
+    仕様が曖昧なまま動いているものは、テストを書こうとした瞬間に曖昧さが表に出る。
+    AI への指示書も同じで、書こうとすると自分が何を分かっていないかが分かります。
+  </p>
+
+  <p>
+    指示書のほうも、記事を書きながら足りないものを足していく予定です。
+    このブログはそのためにあります。
+  </p>
+
+</BlogArticle>
+
+<style>
+  /* この記事だけの図のアニメーション。
+     監視は Layout.astro の IntersectionObserver（.reveal → .visible）に相乗りする。 */
+
+  /* ── 依存図 ── */
+  .dg-box,
+  .dg-t {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  :global(.reveal.visible) .dg-box,
+  :global(.reveal.visible) .dg-t {
+    opacity: 1;
+  }
+
+  .dg-line {
+    stroke-dasharray: 260;
+    stroke-dashoffset: 260;
+    transition: stroke-dashoffset 0.7s ease;
+  }
+  :global(.reveal.visible) .dg-line {
+    stroke-dashoffset: 0;
+  }
+  .dg-l1 { transition-delay: 0.35s; }
+  .dg-l2 { transition-delay: 0.45s; }
+  .dg-l3 { transition-delay: 0.55s; }
+  .dg-l4 { transition-delay: 0.9s; }
+
+  .dg-x {
+    opacity: 0;
+    transform: scale(0.4);
+    transform-origin: 240px 200px;
+    transition:
+      opacity 0.3s ease 1.25s,
+      transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 1.25s;
+  }
+  :global(.reveal.visible) .dg-x {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* ── 3層のガード図 ── */
+  .gd-box,
+  .gd-t {
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 0.45s ease,
+      transform 0.45s ease;
+  }
+  :global(.reveal.visible) .gd-box,
+  :global(.reveal.visible) .gd-t {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .gd-b2 { transition-delay: 0.18s; }
+  .gd-b3 { transition-delay: 0.36s; }
+
+  .gd-axis {
+    opacity: 0;
+    transition: opacity 0.4s ease 0.6s;
+  }
+  :global(.reveal.visible) .gd-axis {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dg-box,
+    .dg-t,
+    .dg-x,
+    .gd-box,
+    .gd-t,
+    .gd-axis {
+      transition: none;
+      opacity: 1;
+      transform: none;
+    }
+    .dg-line {
+      transition: none;
+      stroke-dashoffset: 0;
+    }
+  }
+</style>
