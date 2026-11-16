@@ -1,0 +1,164 @@
+---
+import BlogArticle from '../../layouts/BlogArticle.astro'
+import Callout from '../../components/blog/Callout.astro'
+import Figure from '../../components/blog/Figure.astro'
+import StepFlow from '../../components/blog/StepFlow.astro'
+import { getPost } from '../../data/blog'
+
+const post = getPost('zero-trust-basics')
+---
+
+<BlogArticle post={post}>
+
+  <p>
+    仕事をしていると「ゼロトラスト」という言葉をよく耳にします。
+    なんとなく「セキュリティを厳しくすること」くらいに受け取っていたのですが、
+    いざ説明しようとすると言葉に詰まったので、一度整理してみました。
+  </p>
+
+  <p>
+    ひとことで言うと、ゼロトラストは
+    <strong>「社内ネットワークだから安全」とは考えず、すべてのアクセスを毎回確認する</strong>
+    というセキュリティの考え方です。合言葉は
+    「Never trust, always verify（決して信頼せず、常に検証せよ）」。
+  </p>
+
+  <h2>これまでの考え方 — 城壁で守る</h2>
+
+  <p>
+    ゼロトラストと対になるのが、従来の<strong>境界型防御</strong>です。
+    社内と社外のあいだにファイアウォールや VPN という「城壁」を立てて、
+    門を通って中に入ったものは信頼する、という守り方です。
+  </p>
+
+  <p>
+    これはデータも人も社内にいた時代にはよくできた仕組みでした。
+    でも今は、クラウドの SaaS を使い、家からリモートで働くのが当たり前です。
+    守りたいものも、アクセスする人も、城壁の外にいることのほうが多くなりました。
+    さらに、一度門を突破されると中は素通りなので、侵入されたあとに被害が広がりやすいという弱点もあります。
+  </p>
+
+  <Figure caption="左は門だけで確認して中は素通り。右は場所に関係なく、アクセスのたびに検証を通る">
+    <svg viewBox="0 0 480 230" class="w-full h-auto" role="img"
+         aria-label="境界型防御とゼロトラストの比較図。境界型防御では社外からVPNの門を通ると社内の端末・サーバ・DBが互いに素通りでつながる。ゼロトラストでは社内の端末も社外の端末も、すべて中央の検証を通ってからSaaSやDBにアクセスする">
+
+      <defs>
+        <marker id="zt-arrow" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#9E9E9E" />
+        </marker>
+        <marker id="zt-arrow-a" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#367D80" />
+        </marker>
+      </defs>
+
+      <!-- ── 左: 境界型防御 ── -->
+      <text x="125" y="20" text-anchor="middle" font-size="11" fill="#111" font-weight="700">境界型防御</text>
+
+      <rect x="62" y="38" width="170" height="160" fill="#F5F5F5" stroke="#9E9E9E" stroke-width="1.5" />
+      <text x="147" y="54" text-anchor="middle" font-size="9" fill="#888">社内ネットワーク</text>
+
+      <!-- 門 -->
+      <rect x="54" y="104" width="16" height="28" fill="#FFF8F3" stroke="#AFA895" stroke-width="1.5" />
+      <text x="50" y="100" text-anchor="end" font-size="8" fill="#AFA895">VPN</text>
+
+      <!-- 社外の人 -->
+      <circle cx="22" cy="118" r="9" fill="#FFFFFF" stroke="#9E9E9E" stroke-width="1" />
+      <text x="22" y="142" text-anchor="middle" font-size="8" fill="#888">社外</text>
+      <path d="M 32 118 L 50 118" fill="none" stroke="#9E9E9E" stroke-width="1" marker-end="url(#zt-arrow)" />
+
+      <!-- 社内の要素（互いに素通り） -->
+      <path d="M 118 84 L 176 84 M 112 92 L 140 148 M 182 92 L 154 148 M 72 118 L 104 92" fill="none" stroke="#CCCCCC" stroke-width="1" />
+
+      <rect x="86" y="72" width="44" height="22" fill="#FFFFFF" stroke="#9E9E9E" stroke-width="1" />
+      <text x="108" y="87" text-anchor="middle" font-size="9" fill="#444">端末</text>
+
+      <rect x="164" y="72" width="44" height="22" fill="#FFFFFF" stroke="#9E9E9E" stroke-width="1" />
+      <text x="186" y="87" text-anchor="middle" font-size="9" fill="#444">サーバ</text>
+
+      <rect x="125" y="148" width="44" height="22" fill="#FFFFFF" stroke="#9E9E9E" stroke-width="1" />
+      <text x="147" y="163" text-anchor="middle" font-size="9" fill="#444">DB</text>
+
+      <text x="147" y="218" text-anchor="middle" font-size="9" fill="#AFA895">中に入れば素通り</text>
+
+      <!-- ── 右: ゼロトラスト ── -->
+      <text x="365" y="20" text-anchor="middle" font-size="11" fill="#111" font-weight="700">ゼロトラスト</text>
+
+      <rect x="262" y="52" width="52" height="22" fill="#FFFFFF" stroke="#9E9E9E" stroke-width="1" />
+      <text x="288" y="67" text-anchor="middle" font-size="9" fill="#444">社内の端末</text>
+
+      <rect x="262" y="152" width="52" height="22" fill="#FFFFFF" stroke="#9E9E9E" stroke-width="1" />
+      <text x="288" y="167" text-anchor="middle" font-size="9" fill="#444">社外の端末</text>
+
+      <rect x="416" y="52" width="52" height="22" fill="#FFFFFF" stroke="#9E9E9E" stroke-width="1" />
+      <text x="442" y="67" text-anchor="middle" font-size="9" fill="#444">SaaS</text>
+
+      <rect x="416" y="152" width="52" height="22" fill="#FFFFFF" stroke="#9E9E9E" stroke-width="1" />
+      <text x="442" y="167" text-anchor="middle" font-size="9" fill="#444">DB</text>
+
+      <!-- 検証 -->
+      <rect x="337" y="96" width="56" height="34" fill="#FFF8F3" stroke="#367D80" stroke-width="1.5" />
+      <text x="365" y="111" text-anchor="middle" font-size="10" fill="#367D80" font-weight="700">検証</text>
+      <text x="365" y="123" text-anchor="middle" font-size="8" fill="#888">毎回</text>
+
+      <path d="M 314 66 L 333 100" fill="none" stroke="#9E9E9E" stroke-width="1" marker-end="url(#zt-arrow)" />
+      <path d="M 314 160 L 333 126" fill="none" stroke="#9E9E9E" stroke-width="1" marker-end="url(#zt-arrow)" />
+      <path d="M 393 100 L 412 68" fill="none" stroke="#367D80" stroke-width="1" marker-end="url(#zt-arrow-a)" />
+      <path d="M 393 126 L 412 158" fill="none" stroke="#367D80" stroke-width="1" marker-end="url(#zt-arrow-a)" />
+
+      <text x="365" y="218" text-anchor="middle" font-size="9" fill="#367D80">どこからでも同じ検証を通る</text>
+    </svg>
+  </Figure>
+
+  <h2>ゼロトラストの考え方</h2>
+
+  <p>
+    そこでゼロトラストでは「内側」という前提そのものを捨てます。
+    社内からのアクセスでも社外からのアクセスでも扱いは同じで、
+    リソースに触れるたびに、次のようなことを確かめます。
+  </p>
+
+  <StepFlow
+    steps={[
+      {
+        title: '誰なのかを確かめる',
+        body: 'ID とパスワードに加えて多要素認証などで本人を確認する。一度ログインしたら終わりではなく、アクセスのたびに確かめる。',
+      },
+      {
+        title: 'どの端末からかを確かめる',
+        body: 'OS が最新か、マルウェア対策が入っているかなど、端末の状態もアクセスを許可する条件に入れる。',
+      },
+      {
+        title: '必要な分だけ許可する',
+        body: '最小権限の原則。その仕事に必要なリソースにだけ、必要な操作だけを許可する。',
+        highlight: true,
+      },
+      {
+        title: '記録して見張り続ける',
+        body: '侵入される前提で設計する。ネットワークを細かく分けて被害が広がらないようにし、ログを監視し続ける。',
+      },
+    ]}
+    caption="一度きりの門ではなく、アクセスのたびにこの確認を通る"
+  />
+
+  <p>
+    特に3つ目の「必要な分だけ」が大事だと感じました。
+    本人確認や端末チェックをすり抜けられてしまったときに、被害をどこまでに抑えられるかを決めるのがここだからです。
+  </p>
+
+  <Callout type="tip" title="製品の名前ではなく、設計の方針">
+    <p>
+      「ゼロトラスト製品」という言い方を見かけますが、ゼロトラストは特定の製品ではなく考え方です。
+      実際には認証基盤（Okta や Microsoft Entra ID など）や、VPN の代わりになるアクセスの仕組み
+      （Cloudflare Zero Trust や Zscaler など）を組み合わせて実現します。
+    </p>
+  </Callout>
+
+  <h2>まとめ</h2>
+
+  <p>
+    「城壁で守る」から「アクセスのたびに確かめる」へ。
+    人もデータも社外にいるのが当たり前になったから、守り方の前提が変わった、というのが一番しっくりくる理解でした。
+    次に現場でこの言葉を聞いたときは、どの「確かめる」の話をしているのかを意識してみようと思います。
+  </p>
+
+</BlogArticle>
