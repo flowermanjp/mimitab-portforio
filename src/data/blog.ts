@@ -33,6 +33,14 @@ export const RESERVED_IDS = ['category', 'index'] as const
 // ── 記事レジストリ（新しい順に足していく）────────────────
 export const posts: Post[] = [
   {
+    id: 'zero-trust-basics',
+    title: 'ゼロトラストを「城壁」から整理する',
+    description:
+      'よく聞くけれど説明しようとすると曖昧になる「ゼロトラスト」を、従来の境界型防御と比べながら整理したメモ。',
+    publishedAt: '2026-11-16',
+    categories: ['dev'],
+  },
+  {
     id: 'blog-structure-and-skill',
     title: 'このブログの構成と、AIへの指示書',
     description:
